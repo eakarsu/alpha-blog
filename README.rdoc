@@ -1,0 +1,69 @@
+== README
+
+This README would normally document whatever steps are necessary to get the
+application up and running.
+
+Things you may want to cover:
+
+
+
+To set root route to pages controller home:
+
+Navigate to config/routes.rb file and enter in the following code ->
+
+root 'pages#home'
+
+The reference to the root path within the application code would be root_path
+
+Git references:
+
+git-scm.com
+
+git-scm.com/book/en/v2
+
+gitref.org
+
+First time (required only once to configure git for your environment):
+
+git config --global user.name "Your name"
+
+git config --global user.email "Your email"
+
+replace Your name and Your email above with your actual name and email address which you want shown on repo
+
+To display git config settings:
+
+git config --list
+
+Some useful git commands:
+
+To initialize a git repository for your application (do this from within the application directory) ->
+
+git init
+
+To add/track all files ->
+
+git add -A
+
+To commit changes/updates/additions to repository ->
+
+git commit -m "A useful message to help remember details of commit"
+
+To check current state of file updates with already committed code in repo ->
+
+git status
+
+To reject latest changes ->
+
+git checkout -f
+
+Site to create free online code repositories:
+
+github.com
+
+bitbucket.org
+
+
+
+Please feel free to use a different markup language if you do not plan to run
+<tt>rake doc:app</tt>.
