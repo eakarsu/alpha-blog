@@ -36,7 +36,7 @@ class ArticlesController < ApplicationController
   def index
     @articles = Article.all
   end
- 
+
   def destroy
     @article.destroy
     flash[:notice] = "Article was successfully deleted"
