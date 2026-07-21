@@ -16,7 +16,7 @@ class CategoriesController < ApplicationController
       flash[:success] = "Category was created successfully"
       redirect_to categories_path
     else
-      render 'new'
+      render :new, status: :unprocessable_entity
     end
   end
 
@@ -47,7 +47,7 @@ class CategoriesController < ApplicationController
     end
 
     def require_admin
-      if !logged_in? || (logged_in? and !current_user.admin?)
+      unless logged_in? && current_user.administrator?
         flash[:danger] = "Only admins can perform that action"
         redirect_to categories_path
       end

@@ -1,4 +1,7 @@
-<h2 align="center">Title: <%= @article.title %></h2>
+<% content_for :title, (@article.seo_title.presence || @article.title) %>
+<% content_for :meta_description, (@article.seo_description.presence || truncate(strip_tags(@article.description), length: 155)) %>
+<h2 class="text-center">Title: <%= @article.title %></h2>
+<p class="text-center"><strong>Status:</strong> <%= @article.status.humanize %></p>
 <div class="well col-xs-8 col-xs-offset-2">
   <% if @article.user %>
       <ul class="listing">
@@ -23,7 +26,25 @@
   <% end %>
 
   <hr>
-  <%= simple_format(@article.description) %>
+  <%= simple_format(sanitize(@article.description, tags: %w[p br strong em a ul ol li blockquote code], attributes: %w[href title])) %>
+  <% if logged_in? && (current_user == @article.user || current_user.editor?) %>
+    <section aria-labelledby="workflow-heading">
+      <h3 id="workflow-heading">Editorial workflow</h3>
+      <% if %w[draft changes_requested].include?(@article.status) %>
+        <%= button_to "Submit for review", submit_for_review_article_path(@article), method: :post, class: "btn btn-primary" %>
+      <% end %>
+      <% if current_user.editor? && @article.status == "in_review" && current_user != @article.user %>
+        <%= button_to "Approve", approve_article_path(@article), method: :post, class: "btn btn-success" %>
+        <%= form_tag request_changes_article_path(@article), method: :post do %>
+          <%= label_tag :reason, "Required changes" %><%= text_field_tag :reason, nil, required: true %>
+          <%= submit_tag "Request changes", class: "btn btn-warning" %>
+        <% end %>
+      <% end %>
+      <% if current_user.editor? && @article.status == "approved" && current_user != @article.user %>
+        <%= button_to "Publish", publish_article_path(@article), method: :post, class: "btn btn-success" %>
+      <% end %>
+    </section>
+  <% end %>
   <div class="article-actions">
     <% if logged_in? && (current_user == @article.user || current_user.admin?) %>
         <%= link_to "Edit this article", edit_article_path(@article), class: "btn btn-xs btn-primary" %>

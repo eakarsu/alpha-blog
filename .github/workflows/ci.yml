@@ -1,0 +1,36 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alpha_blog_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alpha_blog_test
+      SECRET_KEY_BASE: test-ci-secret-key-base-not-used-outside-ci
+      APP_HOST: example.test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.4"
+          bundler-cache: true
+      - run: bundle exec rails db:prepare
+      - run: bundle exec rails test
+      - run: bundle exec rails zeitwerk:check
+      - run: bundle exec brakeman --no-pager --ensure-latest
+      - run: bundle exec bundler-audit check --update
+      - run: RAILS_ENV=production SECRET_KEY_BASE=dummy DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/alpha_blog_test bundle exec rails assets:precompile

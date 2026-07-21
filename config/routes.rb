@@ -4,11 +4,25 @@ Rails.application.routes.draw do
 
   root 'pages#home'
   get 'about', to: 'pages#about'
-  resources :articles
+  resources :articles do
+    member do
+      post :submit_for_review
+      post :request_changes
+      post :approve
+      post :publish
+      post :archive
+    end
+    resources :media_assets, only: [:create, :destroy]
+    resources :article_revisions, only: [:index, :show]
+  end
+  get "feed", to: "feeds#show", defaults: { format: :atom }
+  get "export", to: "publishing_exports#show"
+  post "import", to: "publishing_imports#create"
   get 'signup', to: 'users#new'
   resources :users, except: [:new]
   get 'login', to: 'sessions#new'
   post 'login', to: 'sessions#create'
+  get 'api/auth/me', to: 'sessions#show'
   delete 'logout', to: 'sessions#destroy'
   resources :categories, except: [:destroy]
 

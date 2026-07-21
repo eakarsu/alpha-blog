@@ -27,7 +27,13 @@ class UsersController < ApplicationController
   end
 
   def update
-    if @user.update(user_params)
+    attributes = user_params
+    if current_user&.administrator?
+      requested_role = params.dig(:user, :role).to_s
+      attributes[:role] = requested_role if User::ROLES.include?(requested_role)
+      attributes[:active] = ActiveModel::Type::Boolean.new.cast(params.dig(:user, :active)) if params[:user].key?(:active)
+    end
+    if @user.update(attributes)
       flash[:success] = "Your account was updated successfully"
       redirect_to articles_path
     else
@@ -63,7 +69,7 @@ class UsersController < ApplicationController
     end
 
     def require_admin
-      if logged_in? and !current_user.admin?
+      unless logged_in? && current_user.administrator?
         flash[:danger] = "Only admin users can perform that action"
         redirect_to root_path
       end

@@ -1,7 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>AlphaBlog</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="<%= content_for?(:meta_description) ? yield(:meta_description) : 'Independent articles from Alpha Blog authors' %>">
+  <link rel="alternate" type="application/atom+xml" title="Alpha Blog feed" href="<%= feed_path(format: :atom) %>">
+  <title><%= content_for?(:title) ? yield(:title) : "Alpha Blog" %></title>
   <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
   <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
   <%= csrf_meta_tags %>

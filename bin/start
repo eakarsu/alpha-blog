@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${RAILS_ENV:-development}" == "production" ]]; then
+  : "${DATABASE_URL:?DATABASE_URL is required}"
+  : "${SECRET_KEY_BASE:?SECRET_KEY_BASE is required}"
+  : "${APP_HOST:?APP_HOST is required}"
+fi
+
+if [[ "${RUN_MIGRATIONS:-false}" == "true" ]]; then
+  bundle exec rails db:migrate
+fi
+
+exec bundle exec puma -C config/puma.rb

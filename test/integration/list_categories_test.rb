@@ -14,7 +14,7 @@ class ListCategoriesTest < ActionDispatch::IntegrationTest
 
     get categories_path
 
-    assert_template 'categories/index'
+    assert_response :success
 
     assert_select "a[href=?]", category_path(@category), text: @category.name
 
