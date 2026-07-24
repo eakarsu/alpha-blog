@@ -1,42 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
+PROJECT_DIR="$(cd "$(dirname "$0")"&&pwd)";ENV_FILE="$PROJECT_DIR/.env"
+load_env_file(){ local line key value;while IFS= read -r line||[ -n "$line" ];do [[ "$line" =~ ^[[:space:]]*# || "$line" =~ ^[[:space:]]*$ ]]&&continue;line="${line#export }";key="${line%%=*}";value="${line#*=}";key="${key//[[:space:]]/}";[[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]||continue;[ -n "${!key+x}" ]&&continue;if [[ "$value" == \"*\" && "$value" == *\" ]];then value="${value:1:${#value}-2}";elif [[ "$value" == \'*\' && "$value" == *\' ]];then value="${value:1:${#value}-2}";fi;export "$key=$value";done < "$ENV_FILE"; }
+[ -f "$ENV_FILE" ]||{ echo "Missing required file: $ENV_FILE" >&2;exit 1; };load_env_file
+: "${BACKEND_PORT:?BACKEND_PORT is required}";: "${FRONTEND_PORT:?FRONTEND_PORT is required}";: "${DATABASE_URL:?DATABASE_URL is required}"
+: "${OPENROUTER_API_KEY:?OPENROUTER_API_KEY is required}";: "${OPENROUTER_MODEL:?OPENROUTER_MODEL is required}";: "${OPENROUTER_BASE_URL:?OPENROUTER_BASE_URL is required}"
+for assigned_port in "$BACKEND_PORT" "$FRONTEND_PORT";do lsof -nP -iTCP:"$assigned_port" -sTCP:LISTEN >/dev/null 2>&1&&{ echo "Assigned port $assigned_port is occupied" >&2;exit 1; };done
 
-project_dir="$(cd "$(dirname "$0")" && pwd)"
-cd "$project_dir"
-
-if [[ -d /opt/homebrew/opt/ruby/bin ]]; then
-  export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-fi
-
-# Runtime acceptance uses an isolated SQLite copy. Never prepare, replace, or
-# seed the checked-in development/test databases during normal startup.
-if [[ "${NODE_ENV:-}" == "test" && -n "${DB_PATH:-}" ]]; then
-  case "$DB_PATH" in
-    /*) ;;
-    *) echo "DB_PATH must be absolute in test mode" >&2; exit 1 ;;
-  esac
-  export RAILS_ENV=test TEST_DATABASE_PATH="$DB_PATH"
-  unset DATABASE_URL
-  if [[ ! -e "$DB_PATH" ]]; then
-    install -m 600 db/test.sqlite3 "$DB_PATH"
-  elif [[ ! -s "$DB_PATH" ]]; then
-    echo "Refusing to replace empty test database: $DB_PATH" >&2
-    exit 1
-  fi
-
-  if [[ -n "${ADMIN_EMAIL:-}" && -n "${ADMIN_PASSWORD:-}" ]]; then
-    bundle exec rails runner '
-      user = User.find_or_initialize_by(email: ENV.fetch("ADMIN_EMAIL").downcase.strip)
-      user.assign_attributes(
-        username: "runtime_admin",
-        password: ENV.fetch("ADMIN_PASSWORD"),
-        role: "administrator",
-        admin: true,
-        active: true
-      )
-      user.save!
-    '
-  fi
-fi
-
-exec ./bin/start
+if [[ -d /opt/homebrew/opt/ruby/bin ]];then export PATH="/opt/homebrew/opt/ruby/bin:$PATH";fi
+export RUNTIME_PROJECT_NAME=alpha-blog RUNTIME_AI_ENDPOINT=/api/ai/editorial-assistant RUNTIME_AI_FEATURE=editorial-assistant
+export RUNTIME_AI_SYSTEM_PROMPT='You are a blog editorial assistant. Suggest a clear outline, audience-aware revisions, factual verification questions, and responsible publication checks.'
+node "$PROJECT_DIR/runtime/setup.mjs"
+CHILD_PIDS=()
+(cd "$PROJECT_DIR"&&exec node runtime/api.mjs)&CHILD_PIDS+=("$!")
+(cd "$PROJECT_DIR"&&PORT="$FRONTEND_PORT" exec bundle exec puma -C config/puma.rb)&CHILD_PIDS+=("$!")
+cleanup(){ trap - EXIT INT TERM;for pid in "${CHILD_PIDS[@]}";do kill "$pid" 2>/dev/null||true;done;for pid in "${CHILD_PIDS[@]}";do wait "$pid" 2>/dev/null||true;done; }
+trap cleanup EXIT INT TERM
+wait "${CHILD_PIDS[@]}"
