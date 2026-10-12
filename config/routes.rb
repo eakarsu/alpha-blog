@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   get 'signup', to: 'users#new'
   resources :users, except: [:new]
   get 'login', to: 'sessions#new'
+  get 'login/demo-credentials', to: 'sessions#demo_credentials'
   post 'login', to: 'sessions#create'
   get 'api/auth/me', to: 'sessions#show'
   delete 'logout', to: 'sessions#destroy'

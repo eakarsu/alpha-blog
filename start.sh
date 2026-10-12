@@ -10,6 +10,8 @@ for assigned_port in "$BACKEND_PORT" "$FRONTEND_PORT";do lsof -nP -iTCP:"$assign
 if [[ -d /opt/homebrew/opt/ruby/bin ]];then export PATH="/opt/homebrew/opt/ruby/bin:$PATH";fi
 export RUNTIME_PROJECT_NAME=alpha-blog RUNTIME_AI_ENDPOINT=/api/ai/editorial-assistant RUNTIME_AI_FEATURE=editorial-assistant
 export RUNTIME_AI_SYSTEM_PROMPT='You are a blog editorial assistant. Suggest a clear outline, audience-aware revisions, factual verification questions, and responsible publication checks.'
+echo "AI workspace: http://127.0.0.1:$BACKEND_PORT/ai-workspace"
+export VITE_NATIVE_AI_WORKSPACE_URL="http://127.0.0.1:$BACKEND_PORT/ai-workspace" REACT_APP_NATIVE_AI_WORKSPACE_URL="http://127.0.0.1:$BACKEND_PORT/ai-workspace"
 node "$PROJECT_DIR/runtime/setup.mjs"
 CHILD_PIDS=()
 (cd "$PROJECT_DIR"&&exec node runtime/api.mjs)&CHILD_PIDS+=("$!")

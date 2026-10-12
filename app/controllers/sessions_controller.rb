@@ -6,6 +6,20 @@ class SessionsController < ApplicationController
 
   end
 
+  def demo_credentials
+    return head :not_found if Rails.env.production?
+
+    email = ENV['DEMO_EMAIL'].to_s.strip.downcase
+    password = ENV['DEMO_PASSWORD'].to_s
+    user = User.find_by(email: email, active: true) if email.present? && password.present?
+    if user && user.authenticate(password)
+      response.headers['Cache-Control'] = 'no-store'
+      render json: { email: email, password: password }
+    else
+      render json: { error: 'Demo credentials are not configured for an active account.' }, status: :service_unavailable
+    end
+  end
+
   def create
     Publishing::RateLimiter.check!(identity: client_identity, operation: "login", limit: 10, window: 15.minutes)
     credentials = params[:session].presence || params
