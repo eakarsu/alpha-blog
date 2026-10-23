@@ -18,27 +18,10 @@
     </div>
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
-        <button type="button" id="auto-fill-demo-credentials" class="btn btn-default btn-lg">Auto Fill Demo Credentials</button>
         <%= f.submit "Log in", class: 'btn btn-primary btn-lg' %>
-        <p id="demo-credentials-error" role="alert"></p>
       </div>
     </div>
 <% end %>
-<script>
-  document.getElementById("auto-fill-demo-credentials")?.addEventListener("click", async () => {
-    const error = document.getElementById("demo-credentials-error");
-    error.textContent = "";
-    try {
-      const response = await fetch("<%= login_demo_credentials_path %>", { headers: { Accept: "application/json" }, cache: "no-store" });
-      const credentials = await response.json();
-      if (!response.ok) throw new Error(credentials.error || "Demo credentials are unavailable.");
-      document.getElementById("session_email").value = credentials.email;
-      document.getElementById("session_password").value = credentials.password;
-    } catch (failure) {
-      error.textContent = failure.message;
-    }
-  });
-</script>
 <div class="col-xs-4 col-xs-offset-4">
   [ <%= link_to "Cancel request and return to articles listing", articles_path %> ]
 </div>
